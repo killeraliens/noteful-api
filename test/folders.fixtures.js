@@ -19,4 +19,20 @@ function makeFolders() {
   ]
 }
 
-module.exports = { makeFolders }
+const makeFolder = {
+  withXss() {
+    return {
+      id: 1,
+      folder_name: `naughty <script>alert("xss");</script> Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
+    }
+  },
+
+  withSanitizedXss() {
+    return {
+      id: 1,
+      folder_name: `naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt; Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`
+    }
+  }
+}
+
+module.exports = { makeFolders, makeFolder }

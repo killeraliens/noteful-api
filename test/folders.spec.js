@@ -1,6 +1,6 @@
 const knex = require('knex')
 const app = require('../src/app')
-const { makeFolders } = require('./folders.fixtures')
+const { makeFolders, makeFolder } = require('./folders.fixtures')
 
 describe('Folders endpoints', () => {
   let db;
@@ -29,7 +29,7 @@ describe('Folders endpoints', () => {
     return db.destroy()
   })
 
-  describe('GET /folders endpoint', () => {
+  describe('GET /api/folders endpoint', () => {
 
     context('given there is folders data', () => {
       const testFolders = makeFolders()
@@ -40,11 +40,40 @@ describe('Folders endpoints', () => {
           .into('folders')
       })
 
-      it('returns an array of all folders', () => {
+      it('responds with 200 and an array of all folders', () => {
         return supertest(app)
-          .get('/folders')
+          .get('/api/folders')
           .expect(200, testFolders)
       })
+    })
+
+    context('given that there is no folders data', () => {
+      it('responds with 200 and an empty array', () => {
+        return supertest(app)
+          .get('/api/folders')
+          .expect(200, [])
+      })
+    })
+
+    context('given there is xss in the name field', () => {
+      const folderWithXss = makeFolder.withXss()
+      const expected = makeFolder.withSanitizedXss()
+
+      beforeEach('insert a folder with xss', () => {
+        return db
+          .insert([folderWithXss])
+          .into('folders')
+      })
+
+      it('responds with 200 and sanitized folders', () => {
+        return supertest(app)
+          .get('/api/folders')
+          .expect(200)
+          .expect(res => {
+            expect(res.body[0]).to.eql(expected)
+          })
+      })
+
     })
   })
 
