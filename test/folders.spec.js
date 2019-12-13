@@ -70,7 +70,7 @@ describe('Folders endpoints', () => {
           .get('/api/folders')
           .expect(200)
           .expect(res => {
-            expect(res.body[0]).to.eql(expected)
+            expect(res.body[0]).to.eql({...expected, id: 1})
           })
       })
 
@@ -86,10 +86,122 @@ describe('Folders endpoints', () => {
           .post('/api/folders')
           .send(goodFolder)
           .expect(201, { ...goodFolder, id: 1})
-          // .then(res => {
-          //   return supertest(app)
-          //     .get()
-          // })
+          .then(res => {
+            return supertest(app)
+              .get(`/api/folders/${res.body.id}`)
+              .expect(200, res.body)
+          })
+      })
+    })
+
+    context('given missing field in post body', () => {
+      const missingNameFolder = makeFolder.withMissingName()
+
+      it('responds with 400 and error', () => {
+        return supertest(app)
+          .post('/api/folders')
+          .send(missingNameFolder)
+          .expect(400, {error: {message: `folder_name required in post body`}})
+      })
+    })
+
+    context('given there is xss in the folder body', () => {
+      it('responds with 201 and sanitized folder', () => {
+        const folderWithXss = makeFolder.withXss()
+        const expected = makeFolder.withSanitizedXss()
+        return supertest(app)
+          .post('/api/folders')
+          .send(folderWithXss)
+          .expect(201, {...expected, id: 1})
+      })
+    })
+  })
+
+  describe('GET /api/folders/:folder_id endpoint', () => {
+    context('given that the folder exists', () => {
+      const testFolders = makeFolders()
+
+      beforeEach('insert folders into db', () => {
+        return db
+          .insert(testFolders)
+          .into('folders')
+      })
+
+      it('responds with 200 and requested folder', () => {
+        const goodId = testFolders[1].id
+        return supertest(app)
+          .get(`/api/folders/${goodId}`)
+          .expect(200, testFolders[1])
+      })
+    })
+
+    context('given that there are no folders', () => {
+      it('responds with 404', () => {
+        return supertest(app)
+          .get('/api/folders/1')
+          .expect(404, {error: {message: `Folder doesn't exist`}})
+      })
+    })
+  })
+
+  describe('PATCH /api/folders/:folder_id endpoint', () => {
+    context('given that the folder exists', () => {
+      const testFolders = makeFolders()
+      const patchFolder = testFolders[1]
+      const patchBody = { folder_name: 'updated name'}
+      const badPatchBody = { not_name: 'updated name' }
+      const patchedFolder = { ...patchFolder, folder_name: patchBody.folder_name}
+
+      beforeEach('insert folders into db', () => {
+        return db
+          .insert(testFolders)
+          .into('folders')
+      })
+
+      it('responds with 204 and updates folder', () => {
+        return supertest(app)
+          .patch(`/api/folders/${patchFolder.id}`)
+          .send(patchBody)
+          .expect(204)
+          .then(numOfRowsAffected => {
+            return supertest(app)
+              .get(`/api/folders/${patchFolder.id}`)
+              .expect(200, patchedFolder)
+          })
+      })
+
+      it('responds with 400 and error with missing fields', () => {
+
+        return supertest(app)
+          .patch(`/api/folders/${patchFolder.id}`)
+          .send(badPatchBody)
+          .expect(400, { error: { message: `patch body must contain folder_name`}})
+      })
+    })
+
+  })
+
+  describe('DELETE /api/folders/:folder_id', () => {
+    context('given the folder exists', () => {
+      const testFolders = makeFolders()
+      const deleteFolderId = testFolders[1].id
+      const expectedFolders = testFolders.filter(folder => folder.id !== deleteFolderId)
+
+      beforeEach('insert folders into db', () => {
+        return db
+          .insert(testFolders)
+          .into('folders')
+      })
+
+      it('responds with 204 and removes folder from db', () => {
+        return supertest(app)
+          .delete(`/api/folders/${deleteFolderId}`)
+          .expect(204)
+          .then(() => {
+            return supertest(app)
+              .get(`/api/folders`)
+              .expect(200, expectedFolders)
+          })
       })
     })
   })
