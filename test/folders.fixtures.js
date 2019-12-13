@@ -32,7 +32,20 @@ const makeFolder = {
       id: 1,
       folder_name: `naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt; Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`
     }
-  }
+  },
+
+  good() {
+    return {
+      folder_name: 'chores',
+    }
+  },
+
+  withMissingName() {
+    return {
+      bad_field: 'not a name mofo'
+    }
+  },
+
 }
 
 module.exports = { makeFolders, makeFolder }

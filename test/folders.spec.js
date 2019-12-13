@@ -77,4 +77,21 @@ describe('Folders endpoints', () => {
     })
   })
 
+  describe('POST /api/folders endpoint', () => {
+    context('given that the post body is accurate', () => {
+      const goodFolder = makeFolder.good()
+
+      it('responds with 201 and newly created folder with id', () => {
+        return supertest(app)
+          .post('/api/folders')
+          .send(goodFolder)
+          .expect(201, { ...goodFolder, id: 1})
+          // .then(res => {
+          //   return supertest(app)
+          //     .get()
+          // })
+      })
+    })
+  })
+
 })

@@ -13,7 +13,26 @@ const sanitize = folder => {
 foldersRouter
   .route('/')
   .get(getFolders)
+  .post(bodyParser, postFolder)
 
+
+function postFolder(req, res, next) {
+  const knexI = req.app.get('db')
+  const { folder_name } = req.body
+  const postBody = { folder_name }
+
+  for (const [key, value] of Object.entries(postBody)) {
+    if(!value) {
+      res.status(400).json({error: {message: `${key} required`}})
+    }
+  }
+
+  FoldersService
+    .insertFolder(knexI, postBody)
+    .then(folder => {
+      res.status(201).json(sanitize(folder))
+    })
+}
 
 function getFolders(req, res, next) {
   const knexI = req.app.get('db')
