@@ -53,6 +53,22 @@ const makeNote = {
       folder_id: 2,
     }
   },
+
+  withXss() {
+    return {
+      note_name: `naughty <script>alert("xss");</script> Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`,
+      content: 'some content',
+      folder_id: 1,
+    }
+  },
+
+  withSanitizedXss() {
+    return {
+      note_name: `naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt; Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`,
+      content: 'some content',
+      folder_id: 1,
+    }
+  },
 }
 
 module.exports = { makeNotes, makeNote };

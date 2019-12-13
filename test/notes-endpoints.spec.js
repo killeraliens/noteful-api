@@ -54,30 +54,41 @@ describe('Notess endpoints', () => {
       })
     })
 
-    context.skip('given that there is no folders data', () => {
+    context('given that there is no notes data', () => {
       it('responds with 200 and an empty array', () => {
         return supertest(app)
-          .get('/api/folders')
+          .get('/api/notes')
           .expect(200, [])
       })
     })
 
-    context.skip('given there is xss in the name field', () => {
-      const folderWithXss = makeFolder.withXss()
-      const expected = makeFolder.withSanitizedXss()
+    context('given there is xss in the name field', () => {
+      const noteWithXss = makeNote.withXss()
+      const expected = makeNote.withSanitizedXss()
+      const testFolders = makeFolders()
 
       beforeEach('insert a folder with xss', () => {
         return db
-          .insert([folderWithXss])
+          .insert(testFolders)
           .into('folders')
+          .then(() => {
+            return db
+              .insert([noteWithXss])
+              .into('notes')
+          })
       })
 
-      it('responds with 200 and sanitized folders', () => {
+      it('responds with 200 and sanitized folders', function() {
+        //this.retries(3)
         return supertest(app)
-          .get('/api/folders')
+          .get('/api/notes')
           .expect(200)
           .expect(res => {
-            expect(res.body[0]).to.eql({ ...expected, id: 1 })
+            expect(res.body[0]).to.eql({
+              ...expected,
+              id: 1,
+              modified: res.body[0].modified //modified: new Date(new Date().getTime())
+            })
           })
       })
 
