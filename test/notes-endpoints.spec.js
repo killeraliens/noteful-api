@@ -3,6 +3,11 @@ const app = require('../src/app')
 const { makeFolders, makeFolder } = require('./folders.fixtures')
 const { makeNotes, makeNote } = require('./notes.fixtures')
 
+function roundToHour(date) {
+  p = 60 * 60 * 1000; // milliseconds in an hour
+  return new Date(Math.round(date.getTime() / p) * p);
+}
+
 describe('Notess endpoints', () => {
   let db;
 
@@ -79,15 +84,20 @@ describe('Notess endpoints', () => {
       })
 
       it('responds with 200 and sanitized folders', function() {
-        //this.retries(3)
+        this.retries(3)
         return supertest(app)
           .get('/api/notes')
           .expect(200)
           .expect(res => {
+            expect(res.body[0]).to.have.property('modified')
+            expect(res.body[0]).to.have.property('id')
+            const expectedDate = roundToHour(new Date(new Date().getTime()))
+            const actualDate = roundToHour(new Date(res.body[0].modified))
+            expect(actualDate).to.eql(expectedDate)
             expect(res.body[0]).to.eql({
               ...expected,
               id: 1,
-              modified: res.body[0].modified //modified: new Date(new Date().getTime())
+              modified: res.body[0].modified
             })
           })
       })
