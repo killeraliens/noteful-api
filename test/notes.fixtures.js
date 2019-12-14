@@ -69,6 +69,22 @@ const makeNote = {
       folder_id: 1,
     }
   },
+
+  stringForeignKey() {
+    return {
+      note_name: 'hyperdontia',
+      content: 'in norway',
+      folder_id: "2",
+    }
+  },
+
+  stringForeignKeyBad() {
+    return {
+      note_name: 'hyperdontia',
+      content: 'in norway',
+      folder_id: "notanumber",
+    }
+  }
 }
 
 module.exports = { makeNotes, makeNote };

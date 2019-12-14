@@ -63,10 +63,14 @@ function postNote(req, res, next) {
 
   for (const [key, value] of Object.entries(postBody)) {
     if (!value) {
-      res.status(400).json({ error: { message: `${key} required in post body` } })
+      return res.status(400).json({ error: { message: `${key} required in post body` } })
     }
   }
 
+  const folder_id_int = Number(folder_id)
+  if (!Number.isInteger(folder_id_int)) {
+    return res.status(400).json({ error: { message: `folder_id must be an integer` } })
+  }
   postBody.content = content
 
   NotesService

@@ -188,6 +188,7 @@ describe('Notess endpoints', () => {
       //const testNotes = makeNotes
       const note = makeNote.good()
       const requiredFields = ['folder_id', 'note_name']
+
       requiredFields.forEach(field => {
         it('responds with 400 and error', () => {
           delete note[field]
@@ -195,7 +196,53 @@ describe('Notess endpoints', () => {
             .post('/api/notes')
             .send(note)
             .expect(400, { error: { message: `${field} required in post body` } })
+            // .then(() => {
+            //   return supertest(app)
+            //     .get(`/api/notes`)
+            //     .expect(200)
+            //     .expect(notes => {
+            //        // I need to test that this note was NOT made
+            //     })
+            // })
         })
+      })
+
+      it('responds with 400 and error, and does not add the note', () => {
+        delete note['note_name']
+        return supertest(app)
+          .post('/api/notes')
+          .send(note)
+          .expect(400, { error: { message: `note_name required in post body` } })
+          .then(() => {
+            return supertest(app)
+              .get(`/api/notes`)
+              .expect(200)
+              .expect(res => {
+                expect(res.body).to.eql([])
+              })
+          })
+      })
+    })
+
+    context('given an INT field value is not a number', () => {
+      const goodNoteWithStringInt = makeNote.stringForeignKey()
+      const badNoteWithStringInt = makeNote.stringForeignKeyBad()
+
+      it('responds with 200 and adds note if string converts to number', () => {
+        return supertest(app)
+          .post('/api/notes')
+          .send(goodNoteWithStringInt)
+          .expect(201)
+          .expect(res => {
+            expect(res.body).to.eql({ ...goodNoteWithStringInt, id: 1, folder_id: 2, modified: res.body.modified })
+          })
+      })
+
+      it('responds with 400 if the id cannot be converted to an integer', () => {
+        return supertest(app)
+          .post('/api/notes')
+          .send(badNoteWithStringInt)
+          .expect(400, {error: {message: `folder_id must be an integer`}})
       })
     })
 
